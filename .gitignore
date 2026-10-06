@@ -1,0 +1,3 @@
+# Code repos are cloned into workspace/ and keep their own git history
+workspace/*
+!workspace/.gitkeep

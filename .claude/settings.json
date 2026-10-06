@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "deny": [
+      "Skill(speckit-implement)",
+      "Skill(speckit-implement *)",
+      "Skill(speckit-converge)",
+      "Skill(speckit-converge *)",
+      "Skill(speckit-taskstoissues)",
+      "Skill(speckit-taskstoissues *)",
+      "Skill(frontend-commit-messages)",
+      "Skill(frontend-commit-messages *)",
+      "Skill(find-skills)",
+      "Skill(find-skills *)",
+      "Skill(frontend-accessibility)",
+      "Skill(frontend-accessibility *)",
+      "Skill(frontend-api-integration)",
+      "Skill(frontend-api-integration *)",
+      "Skill(frontend-react-typescript)",
+      "Skill(frontend-react-typescript *)",
+      "Skill(frontend-testing)",
+      "Skill(frontend-testing *)",
+      "Skill(next-best-practices)",
+      "Skill(next-best-practices *)",
+      "Skill(wiki)",
+      "Skill(wiki *)"
+    ]
+  }
+}

@@ -1,0 +1,68 @@
+---
+description: Intake a Jira ticket, classify its lane, and produce/update the spec up to /speckit-analyze (no code)
+argument-hint: <JIRA_KEY-NNN>
+---
+
+Ticket: $ARGUMENTS
+
+Follow `CLAUDE.md` sections 2–5. Do **not** write production code in this command.
+
+## 1. Intake
+1. Fetch the ticket via Atlassian MCP: summary, description, acceptance criteria, attachments,
+   linked Figma URLs, linked tickets. If `$ARGUMENTS` is empty or not a valid key, ask for it.
+2. If acceptance criteria are missing or vague: draft them marked `[PROPOSED]` and ask the user
+   to confirm before continuing.
+3. Resolve the target repo(s) under `workspace/` (`CLAUDE.md` §1). If unclear, ask the user.
+   Then read `workspace/<repo>/CLAUDE.md` if it exists (precedence in `CLAUDE.md` §1).
+   All following steps run inside `workspace/<repo>/`. Multi-repo ticket: repeat steps 3–4 per
+   repo, one spec each, cross-linked.
+4. Search `workspace/<repo>/specs/` for an existing spec covering the affected feature (by name,
+   FR ids, routes, modules touched).
+
+## 2. Classify
+State the lane (0/1/2/3) and a one-line reason.
+- **Lane 0 or 1:** stop here and tell the user to run `/fix $ARGUMENTS`.
+- **Lane 2 or 3:** continue.
+
+## 3. Spec
+`cd workspace/<repo>` before any `/speckit-*` command so its scripts and paths resolve inside
+the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
+### Lane 2 — change to existing feature
+1. If no spec exists for the feature, create it once describing current behavior (read from code).
+   If it exists, write `.specify/feature.json` as `{ "feature_directory": "specs/<NNN-feature>" }`
+   so the `/speckit-*` skills below act on this spec, not the last one specified.
+2. Append `## Change: <KEY> — <title>` to the existing `spec.md` (format in `CLAUDE.md` §4) and
+   update the affected requirements in place. Do **not** create a new spec folder.
+3. Run `/speckit-clarify` if anything is ambiguous.
+4. Update `plan.md` for the change. Then:
+   - `tasks.md` exists → do **not** run `/speckit-tasks` (it regenerates the file and drops
+     ticked tasks and the `## Build log`). Append the new tasks by hand under a
+     `## Change: <KEY>` phase, continuing the existing task IDs, same checklist format,
+     tagged with the ticket key.
+   - No `tasks.md` yet → run `/speckit-tasks`.
+
+### Lane 3 — new feature
+1. Optional: `superpowers:brainstorming` to shape the idea (only here, before specify).
+2. `/speckit-specify` with the ticket content, AC, and Figma links.
+3. `/speckit-clarify`.
+4. `/speckit-plan`.
+5. `/speckit-tasks`.
+
+### Both lanes — task list rules
+- Every task: one verifiable outcome, ≤ ~5 files (`CLAUDE.md` §5).
+- UI tasks reference the exact Figma node URL and include "verify with agent-browser against Figma screenshot".
+- Non-automatable checks are separate tasks marked `[manual]` with concrete steps.
+- Add an empty `## Build log` section at the end of `tasks.md` if missing.
+
+## 4. Analyze
+Run `/speckit-analyze`. Fix CRITICAL/HIGH findings in spec/plan/tasks and re-run until none remain.
+
+## 5. Report and stop
+Output:
+- Lane and reason
+- Target repo(s) and spec path(s) (`workspace/<repo>/specs/<feature>/`), created or updated
+- AC status (confirmed / proposed-pending)
+- Task count, `[manual]` tasks, open questions
+- Next step: `/build workspace/<repo>/specs/<feature>` (in dependency order if multi-repo)
+
+Do **not** run `/speckit-implement`, `writing-plans`, or start building.
