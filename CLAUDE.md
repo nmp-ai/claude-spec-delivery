@@ -2,7 +2,7 @@
 
 This file defines **process only**: how work moves from a ticket to merged, documented code.
 Technical conventions (stack, coding standards, test requirements) live in each repo's Spec Kit
-constitution (`workspace/<repo>/.specify/memory/constitution.md`, managed via
+constitution (`docs/<repo>/.specify/memory/constitution.md`, managed via
 `/speckit-constitution`). Do not duplicate them here.
 
 ---
@@ -21,14 +21,21 @@ constitution (`workspace/<repo>/.specify/memory/constitution.md`, managed via
 <root>/
 ├── CLAUDE.md              # process (this file)
 ├── .claude/commands/      # /ticket, /build, /fix
-└── workspace/             # code repos, each cloned here with its own git
+├── docs/                  # Spec Kit artifacts, one folder per code repo (committed at root)
+│   ├── <repo-a>/
+│   │   ├── .specify/      # Spec Kit scripts, templates, constitution for <repo-a>
+│   │   └── specs/         # specs/plans/tasks for features of <repo-a>
+│   └── <repo-b>/
+└── workspace/             # code repos only, each cloned here with its own git
     ├── <repo-a>/
     │   ├── CLAUDE.md      # optional: repo-specific instructions (see below)
-    │   ├── .specify/      # Spec Kit config + constitution for this repo
-    │   ├── specs/         # specs for features of this repo
     │   └── ...code
     └── <repo-b>/
 ```
+
+Code repos contain **code only**. Spec Kit never runs inside `workspace/`: no `.specify/`,
+`specs/`, or Spec Kit `.claude/` folders there. Every spec, plan, task list, contract note, and
+constitution lives in `docs/<repo>/`.
 
 | Repo | Path | Type | Purpose |
 |---|---|---|---|
@@ -39,12 +46,15 @@ The **Type** column (FE / BE) decides which guardrails in §5 apply: "UI work" a
 "UI verification" for FE, "Backend work" for BE.
 
 - Add a repo: `git clone <url> workspace/<repo>`, then add a row above and its commands in §6.
-  If it has no Spec Kit yet, run `specify init --here` inside it, then `/speckit-constitution`.
-- `workspace/*` is git-ignored by this root folder. Every git operation (branch, commit, push)
-  runs **inside the target repo**, never at the root.
-- Each ticket is resolved to a target repo first. Spec Kit commands, specs, branches, and
-  verify commands all run inside `workspace/<repo>/`.
-- A ticket spanning several repos: one spec per repo (in each repo's `specs/`), each linking to
+  Initialize its docs folder: `mkdir -p docs/<repo>`, run `specify init --here` inside
+  `docs/<repo>` (README → Setup), then `/speckit-constitution` from there.
+- Git, two places:
+  - **Code** (branch, commit, push) runs inside `workspace/<repo>`. `workspace/*` is
+    git-ignored by this root folder.
+  - **Docs** (`docs/<repo>/...`) are committed in this root repo, never in a code repo.
+- Each ticket is resolved to a target repo first. Spec Kit commands run inside
+  `docs/<repo>/`; code, branches, and verify commands run inside `workspace/<repo>/`.
+- A ticket spanning several repos: one spec per repo (in each `docs/<repo>/specs/`), each linking to
   the other(s) and the same ticket key. Build them in dependency order (e.g. API before UI).
 - Fullstack ticket (BE + FE): the API contract is defined only on the BE side (§5 "Backend
   work"). The FE spec links to it instead of redefining endpoints or payloads. Build the BE
@@ -84,7 +94,7 @@ migration), do not pick one silently: point out the conflict and ask the user.
 | Concern | Tool | Source of truth |
 |---|---|---|
 | Ticket / requirements | Jira (Atlassian MCP) | Jira ticket |
-| Spec, plan, task list | Spec Kit | `workspace/<repo>/specs/<NNN-feature>/spec.md`, `plan.md`, `tasks.md` |
+| Spec, plan, task list | Spec Kit | `docs/<repo>/specs/<NNN-feature>/spec.md`, `plan.md`, `tasks.md` |
 | Execution (TDD, subagents, review) | Superpowers | `tasks.md` checkboxes |
 | UI design | Figma MCP | Figma frame linked in the ticket/spec |
 | UI verification | `agent-browser` skill + CLI | Screenshots of the running app |
@@ -129,25 +139,31 @@ migration), do not pick one silently: point out the conflict and ask the user.
 
 ### Spec Kit layout across repos
 
-Claude Code started at this root does **not** discover `.claude/commands/` or `.claude/skills/`
-inside `workspace/<repo>/` at startup (verified: they return `Unknown command`). So:
+Spec Kit runs in `docs/<repo>/`, never in `workspace/<repo>/`. Claude Code started at this
+root does **not** discover `.claude/commands/` or `.claude/skills/` inside subfolders at startup
+(verified: they return `Unknown command`). So:
 
-- The Spec Kit skills live **once** at the root: `.claude/skills/speckit-*/`, copied from a repo
-  (excluding `speckit-implement`, `speckit-converge`, `speckit-taskstoissues`).
-- Scripts, templates, constitution, and specs live **per repo**: `workspace/<repo>/.specify/`
-  and `workspace/<repo>/specs/`.
-- **Before running any `/speckit-*` skill, `cd workspace/<repo>`.** Spec Kit scripts locate the
+- The Spec Kit skills live **once** at the root: `.claude/skills/speckit-*/`, copied from a
+  `docs/<repo>/.claude/skills/` folder created by `specify init` (excluding
+  `speckit-implement`, `speckit-converge`, `speckit-taskstoissues`). `docs/*/.claude/` is
+  git-ignored at the root.
+- Scripts, templates, constitution, and specs live **per repo** under docs:
+  `docs/<repo>/.specify/` and `docs/<repo>/specs/`.
+- **Before running any `/speckit-*` skill, `cd docs/<repo>`.** Spec Kit scripts locate the
   project by walking up from the current directory to the nearest `.specify/` (or use
-  `SPECIFY_INIT_DIR=workspace/<repo>`). All relative paths in the skills (`.specify/...`,
-  `specs/...`) and "project root" mean the target repo, never this root. Never create
-  `.specify/` or `specs/` at this root.
-- Spec Kit finds the current feature through `workspace/<repo>/.specify/feature.json`, which
+  `SPECIFY_INIT_DIR=docs/<repo>`). All relative paths in the skills (`.specify/...`,
+  `specs/...`) and "project root" mean `docs/<repo>`, never this root and never
+  `workspace/<repo>`. Never create `.specify/` or `specs/` at this root or in a code repo.
+- Spec Kit skills read the code from `workspace/<repo>` (the code repo matching
+  `docs/<repo>`), e.g. when `/speckit-plan` or `/speckit-analyze` inspects the existing code or
+  a Lane 2 spec describes current behavior.
+- Spec Kit finds the current feature through `docs/<repo>/.specify/feature.json`, which
   only `/speckit-specify` writes. Before running any other `/speckit-*` skill on an existing
   spec (Lane 2, `/build`, re-runs), write it to point at the target spec:
   `{ "feature_directory": "specs/<NNN-feature>" }`. Otherwise the skills act on whichever
   feature was specified last.
 - Spec Kit core does **not** create git branches. `/build` creates the feature branch.
-- Spec Kit extension hooks for git (`speckit.git.*` in `workspace/<repo>/.specify/extensions.yml`,
+- Spec Kit extension hooks for git (`speckit.git.*` in `docs/<repo>/.specify/extensions.yml`,
   e.g. a `before_specify` branch hook or auto-commit hooks) must stay disabled
   (`enabled: false`): branches come from `/build`, commits follow §5. If a `/speckit-*` skill
   announces a git hook, do not run it; tell the user to disable it (README → Setup step 4).
@@ -164,10 +180,10 @@ inside `workspace/<repo>/` at startup (verified: they return `Unknown command`).
 2. Resolve the target repo(s) in `workspace/` (from the ticket's component/labels/description,
    or the code). If unclear, ask the user.
 3. Classify the ticket into a lane (section 4). State the lane and the reason in one line.
-4. Search `workspace/<repo>/specs/` for an existing spec covering the affected feature.
+4. Search `docs/<repo>/specs/` for an existing spec covering the affected feature.
 5. Continue with the lane's path:
    - Lane 0/1 → `/fix <KEY>`
-   - Lane 2/3 → `/ticket <KEY>` (stops after analyze), then `/build workspace/<repo>/specs/<feature>`
+   - Lane 2/3 → `/ticket <KEY>` (stops after analyze), then `/build docs/<repo>/specs/<feature>`
 6. After code is done: sync docs (Step 4).
 
 ### Step 2 — Spec (Lane 2/3 only, via `/ticket`)
@@ -188,7 +204,8 @@ Before finishing the branch, update `spec.md` so it describes what was actually 
   deviations from `plan.md` (with reasons), known limitations, manual verification results.
 - For Lane 2, the `## Change: <KEY>` section must reflect the final behavior.
 
-The spec is the feature documentation. There is no separate doc to maintain.
+The spec is the feature documentation. There is no separate doc to maintain. It lives in
+`docs/<repo>/specs/` and is committed in this root repo, not in the code repo (§5 "General").
 
 ---
 
@@ -426,6 +443,11 @@ Applies to endpoint calls (BE) and UI checks (FE).
 - Commit per task using Conventional Commits with the ticket key (via the `git-commit` skill):
   `<type>(<scope>): <KEY> <task id> <summary>`, e.g. `feat(orders): ABC-123 T012 add status filter`.
   Omit `<task id>` outside `/build`. Do not use the global `frontend-commit-messages` skill.
+- Code commits (in `workspace/<repo>`) contain code only, never files from `docs/`.
+- Docs commits (in this root repo) contain only `docs/<repo>/...`, e.g.
+  `docs(<repo>): <KEY> add spec`, `docs(<repo>): <KEY> sync spec with implementation`. They are
+  made at the end of `/ticket`, at the docs sync step of `/build`, when `/build` stops early,
+  and when `/fix` updates a spec. Stage only `docs/` paths; never include other root files.
 
 ---
 
@@ -473,5 +495,5 @@ duplicating them — the repo file is the source of truth.
 ## 7. Shortcuts (`.claude/commands/`)
 
 - `/ticket <KEY>` — intake, classify lane, produce/update spec up to `/speckit-analyze`. No code.
-- `/build <workspace/repo/specs/feature>` — execute `tasks.md` with Superpowers, tick tasks, sync docs.
+- `/build <docs/repo/specs/feature>` — execute `tasks.md` with Superpowers, tick tasks, sync docs.
 - `/fix <KEY or description>` — Lane 0/1 quick fix without Spec Kit.

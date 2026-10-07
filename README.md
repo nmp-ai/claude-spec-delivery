@@ -7,7 +7,9 @@ contract owned by the BE side.
 
 - `CLAUDE.md` is the rulebook: lanes, workflow, guardrails, and per-repo commands.
 - `.claude/commands/` adds three shortcuts: `/ticket`, `/build`, and `/fix`.
-- `workspace/` holds the code repos. Each repo keeps its own git history, specs, and constitution.
+- `workspace/` holds the code repos (code only). Each repo keeps its own git history.
+- `docs/` holds the Spec Kit artifacts per repo (constitution, specs, plans, tasks), committed
+  in this root repo, so specs never end up in a code repo.
 
 ---
 
@@ -32,14 +34,17 @@ contract owned by the BE side.
 ├── .claude/skills/supabase-postgres-best-practices # BE: Postgres schema/query/migration rules (from supabase/agent-skills)
 ├── .claude/commands/
 │   ├── ticket.md             # /ticket <KEY>
-│   ├── build.md              # /build <workspace/repo/specs/feature>
+│   ├── build.md              # /build <docs/repo/specs/feature>
 │   └── fix.md                # /fix <KEY | description>
-└── workspace/                # code repos (git-ignored here)
+├── docs/                     # Spec Kit artifacts per code repo (committed here)
+│   └── <repo>/
+│       ├── .specify/         # Spec Kit scripts, templates, constitution
+│       ├── .claude/          # skills created by `specify init` (git-ignored; copied to the root)
+│       ├── specs/<NNN-feature>/{spec,plan,tasks}.md
+│       └── specs/<NNN-feature>/contracts/  # BE: OpenAPI contract, or notes linking to the repo's own OpenAPI file
+└── workspace/                # code repos, code only (git-ignored here)
     └── <repo>/
         ├── CLAUDE.md         # optional: repo-specific instructions
-        ├── .specify/         # Spec Kit config + constitution
-        ├── specs/<NNN-feature>/{spec,plan,tasks}.md
-        ├── specs/<NNN-feature>/contracts/  # BE: OpenAPI contract, or notes linking to the repo's own OpenAPI file
         └── ...code
 ```
 
@@ -76,39 +81,38 @@ contract owned by the BE side.
    - A repo `CLAUDE.md` is read automatically once a ticket targets that repo. The repo file
      wins on technical rules and the root file wins on process; conflicts are flagged to you
      (`CLAUDE.md` §1). Don't `@import` repo files into the root `CLAUDE.md`.
-4. **Initialize Spec Kit inside each repo**, if it doesn't have it yet:
+4. **Initialize Spec Kit for each repo in `docs/<repo>`** (never inside `workspace/<repo>`):
    ```bash
-   cd workspace/<repo> && specify init --here --force --non-interactive --integration claude
+   mkdir -p docs/<repo> && cd docs/<repo> && specify init --here --force --non-interactive --integration claude
    ```
-   (Spec Kit ≥ 1.x uses `--integration claude`; older versions used `--ai claude`.)
+   Use the same `<repo>` name as the folder in `workspace/`. (Spec Kit ≥ 1.x uses
+   `--integration claude`; older versions used `--ai claude`.) If a code repo already has its
+   own `.specify/` or `specs/` from before, move them into `docs/<repo>/` and remove them from
+   the code repo in a normal code commit.
 
-   Then block the Spec Kit skills this workflow forbids. Run this in the repo, and re-run it
-   after every Spec Kit upgrade there:
+   Then block the Spec Kit skills this workflow forbids. Run this in `docs/<repo>`, and re-run
+   it after every Spec Kit upgrade there:
    ```bash
    sed -i '' -e 's/^disable-model-invocation: false$/disable-model-invocation: true/' -e 's/^user-invocable: true$/user-invocable: false/' .claude/skills/speckit-implement/SKILL.md && for s in speckit-converge speckit-taskstoissues; do sed -i '' 's/^disable-model-invocation: false$/disable-model-invocation: true/' .claude/skills/$s/SKILL.md; done
    ```
    (`sed -i ''` is macOS syntax; on Linux use `sed -i`.) After this, Claude can't call
    `speckit-implement` and typing `/speckit-implement` does nothing. `speckit-converge` and
    `speckit-taskstoissues` stay available only when you type them yourself. The root
-   `.claude/settings.json` also denies all three for Claude, which covers repos you haven't
+   `.claude/settings.json` also denies all three for Claude, which covers folders you haven't
    patched yet.
    If `.specify/extensions.yml` exists, set `enabled: false` on every `speckit.git.*` hook
    (branch creation, auto-commit). `/build` creates the branch and commits follow `CLAUDE.md` §5.
    Then run `/speckit-constitution` in Claude Code to record that repo's stack, coding
    standards, and test requirements. Technical rules go in the constitution, not in `CLAUDE.md`.
 5. **Spec Kit skills at the root.** Claude Code started at the root does not see skills inside
-   `workspace/<repo>/.claude/`. The template already ships them in `.claude/skills/speckit-*`
-   (Spec Kit 1.1.1). After upgrading Spec Kit, re-copy them from any initialized repo, leaving
-   out the ones this workflow doesn't use:
+   `docs/<repo>/.claude/`. The template already ships them in `.claude/skills/speckit-*`
+   (Spec Kit 1.1.1). After upgrading Spec Kit, re-copy them from any initialized docs folder,
+   leaving out the ones this workflow doesn't use:
    ```bash
-   for d in workspace/<repo>/.claude/skills/speckit-*; do case "$(basename "$d")" in speckit-implement|speckit-converge|speckit-taskstoissues) ;; *) rm -rf ".claude/skills/$(basename "$d")" && cp -R "$d" .claude/skills/ ;; esac; done
+   for d in docs/<repo>/.claude/skills/speckit-*; do case "$(basename "$d")" in speckit-implement|speckit-converge|speckit-taskstoissues) ;; *) rm -rf ".claude/skills/$(basename "$d")" && cp -R "$d" .claude/skills/ ;; esac; done
    ```
-   Only the skills are copied. Scripts, templates, and the constitution stay in each repo's
-   `.specify/`, and Claude `cd`s into the repo before running them.
-
-   *Alternative:* start Claude with `claude --add-dir workspace/<repo>`, which loads that repo's
-   `.claude/` skills (including `speckit-implement`). This has to be done every session and
-   gets messy with several repos.
+   Only the skills are copied. Scripts, templates, and the constitution stay in
+   `docs/<repo>/.specify/`, and Claude `cd`s into `docs/<repo>` before running them.
 
    The template also ships the `git-commit` skill from
    [github/awesome-copilot](https://www.skills.sh/github/awesome-copilot/git-commit), used for
@@ -190,10 +194,10 @@ If you're not sure, start with `/ticket <KEY>`. It classifies the ticket and tel
 ### 3. `/build <spec-path>`: implement
 
 ```
-/build workspace/web-app/specs/012-order-filter
+/build docs/web-app/specs/012-order-filter
 ```
 
-1. Creates a feature branch or worktree in that repo.
+1. Creates a feature branch or worktree in the code repo (`workspace/web-app`).
 2. Records which tests already fail (the baseline) in `tasks.md` → `## Build log`.
 3. For each task:
    1. A subagent implements it with TDD.
@@ -226,7 +230,7 @@ If the fix turns out bigger than Lane 1, it stops and suggests `/ticket` instead
   (both are denied in `.claude/settings.json`). Lane 3 brainstorming stops once the idea is
   agreed, without writing its own design doc.
 - **One spec per feature.** Changes to an existing feature update its spec with a `Change:` section.
-- **Current feature:** Spec Kit picks the feature from `workspace/<repo>/.specify/feature.json`,
+- **Current feature:** Spec Kit picks the feature from `docs/<repo>/.specify/feature.json`,
   which only `/speckit-specify` writes. `/ticket` (Lane 2) and `/build` set it to the target
   spec first. Do the same if you run a `/speckit-*` skill yourself on an existing spec.
 - **Lane 2 tasks:** never re-run `/speckit-tasks` on a spec that already has `tasks.md`; new
@@ -299,11 +303,14 @@ If a ticket touches more than one repo (for example, the API and the web app):
 That's expected. They're recorded as the baseline. A task only fails if it adds *new* failures.
 
 **I want to edit a task before building.**
-Edit `tasks.md` directly. Then, inside `workspace/<repo>`, make sure `.specify/feature.json`
+Edit `tasks.md` directly. Then, inside `docs/<repo>`, make sure `.specify/feature.json`
 points at that spec (`{ "feature_directory": "specs/<NNN-feature>" }`) and re-run
 `/speckit-analyze`.
 
 **Where do I commit?**
-Inside `workspace/<repo>`. Everything under `workspace/` is git-ignored at the root, so commit
-template changes (`CLAUDE.md`, commands, README) at the root separately. The message format is
-under [Rules worth knowing](#rules-worth-knowing).
+- **Code:** inside `workspace/<repo>`. Everything under `workspace/` is git-ignored at the root.
+- **Specs and docs:** at the root, only `docs/<repo>/...` (e.g. `docs(web-app): ABC-123 add spec`).
+  `/ticket`, `/build`, and `/fix` do this for you.
+- **Template changes** (`CLAUDE.md`, commands, README): at the root, in their own commits.
+
+The message format is under [Rules worth knowing](#rules-worth-knowing).

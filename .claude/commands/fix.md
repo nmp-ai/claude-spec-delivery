@@ -45,12 +45,14 @@ After **2** failed fix attempts, stop: report what was tried, the errors, and hy
 Never skip/weaken tests to get green.
 
 ## 5. Spec impact
-- If the fix changes behavior documented in an existing `workspace/<repo>/specs/*/spec.md`, update that requirement
+- If the fix changes behavior documented in an existing `docs/<repo>/specs/*/spec.md`, update that requirement
   and add a short `## Change: <KEY>` entry. Otherwise no spec edit.
 - Hotfix: if docs sync is deferred, say so explicitly in the report so it is done in a follow-up.
 
 ## 6. Commit and report
-Commit (use the `git-commit` skill): `<type>(<scope>): <KEY> <summary>`, e.g. `fix(cart): ABC-45 handle empty items`
-(or `<type>(<scope>): <summary>` without a key).
+Commit the code in `workspace/<repo>` (use the `git-commit` skill): `<type>(<scope>): <KEY> <summary>`,
+e.g. `fix(cart): ABC-45 handle empty items` (or `<type>(<scope>): <summary>` without a key).
+If a spec was updated, commit it separately in the root repo, staging only `docs/<repo>/`:
+`docs(<repo>): <KEY> update spec` (`CLAUDE.md` §5 "General").
 Report: lane, root cause, files changed, test evidence, baseline failures (if any),
 manual steps pending, spec updated or not.

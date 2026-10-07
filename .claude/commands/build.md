@@ -1,6 +1,6 @@
 ---
 description: Execute tasks.md for a spec with Superpowers (subagents, TDD, review), tick tasks, then sync docs
-argument-hint: <workspace/repo/specs/NNN-feature>
+argument-hint: <docs/repo/specs/NNN-feature>
 ---
 
 Spec folder: $ARGUMENTS
@@ -10,15 +10,17 @@ Follow `CLAUDE.md` sections 2–6. `tasks.md` is the only plan.
 `superpowers:brainstorming`.
 
 ## 1. Preconditions
-1. `$ARGUMENTS` is inside `workspace/<repo>/specs/`. The repo root is `workspace/<repo>`; all
-   commands, git operations, and file edits happen inside it. Read `workspace/<repo>/CLAUDE.md`
-   if it exists (precedence in `CLAUDE.md` §1).
+1. `$ARGUMENTS` is inside `docs/<repo>/specs/`. The code repo is `workspace/<repo>` (same
+   `<repo>` name): code edits, verify commands, and code git operations happen inside it. Spec
+   Kit and `tasks.md`/`spec.md` edits happen in `docs/<repo>` (`CLAUDE.md` §1). Read
+   `workspace/<repo>/CLAUDE.md` if it exists (precedence in `CLAUDE.md` §1).
 2. `$ARGUMENTS/spec.md`, `plan.md`, `tasks.md` exist. If not, stop and point to `/ticket`.
-3. Write `workspace/<repo>/.specify/feature.json` as
+3. Write `docs/<repo>/.specify/feature.json` as
    `{ "feature_directory": "specs/<NNN-feature>" }` (this spec), then confirm `/speckit-analyze`
-   (run from inside `workspace/<repo>`) has no CRITICAL findings (re-run it if spec/tasks changed since).
-4. Work on a feature branch or worktree of that repo (`superpowers:using-git-worktrees`), never
-   its default branch.
+   (run from inside `docs/<repo>`) has no CRITICAL findings (re-run it if spec/tasks changed since).
+4. Work on a feature branch or worktree of the code repo `workspace/<repo>`
+   (`superpowers:using-git-worktrees`), never its default branch. Docs stay in `docs/<repo>`
+   at the root; do not copy them into the branch or worktree.
 
 ## 2. Baseline
 BE repo: first run the "Before the first test run" checks (`CLAUDE.md` §5 "Backend work":
@@ -64,8 +66,9 @@ Use `superpowers:subagent-driven-development`, taking tasks **in order from `tas
    contract test output against the contract, and `/security-review` results. The code-quality
    review of BE tasks also checks endpoints against `api-design-principles` and schema/query
    changes against `supabase-postgres-best-practices` (Postgres repos).
-3. **On pass** — immediately tick the task `[x]` in `tasks.md`, then commit:
-   `<type>(<scope>): <KEY> <task id> <summary>` (use the `git-commit` skill). Never batch ticks.
+3. **On pass** — immediately tick the task `[x]` in `docs/<repo>/specs/<feature>/tasks.md`, then
+   commit the code in `workspace/<repo>`: `<type>(<scope>): <KEY> <task id> <summary>` (use the
+   `git-commit` skill). The code commit never includes `docs/` files. Never batch ticks.
 4. **On failure** — fix and re-review. After **2** failed attempts on the same task, stop: write a
    blocker note in `## Build log` (what was tried, errors, hypotheses), run
    `superpowers:systematic-debugging` once, or ask the user. Never skip/weaken tests.
@@ -84,7 +87,10 @@ Update `$ARGUMENTS/spec.md`:
 - BE: list migrations written (and whether the user applied them), contract changes (breaking
   or not), and accepted security-review risks.
 - Lane 2: make sure `## Change: <KEY>` matches the final behavior.
-Commit: `docs(<scope>): <KEY> sync spec with implementation`.
+Commit in the **root** repo, staging only `docs/<repo>/`:
+`docs(<repo>): <KEY> sync spec with implementation` (`CLAUDE.md` §5 "General").
+If `/build` stops early (blocker, user stops), commit the `docs/<repo>/` changes the same way
+(`docs(<repo>): <KEY> update tasks progress`) so ticks and the build log are not lost.
 
 ## 6. Finish
 Use `superpowers:finishing-a-development-branch`. Report: tasks done/remaining, verify results vs

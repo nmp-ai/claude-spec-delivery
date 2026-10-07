@@ -1,3 +1,7 @@
 # Code repos are cloned into workspace/ and keep their own git history
 workspace/*
 !workspace/.gitkeep
+
+# Spec Kit artifacts live in docs/<repo>/ and are committed here.
+# Skills that `specify init` creates there are copied to .claude/skills/ instead.
+docs/*/.claude/

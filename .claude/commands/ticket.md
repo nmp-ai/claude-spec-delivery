@@ -14,9 +14,10 @@ Follow `CLAUDE.md` sections 2–5. Do **not** write production code in this comm
    to confirm before continuing.
 3. Resolve the target repo(s) under `workspace/` (`CLAUDE.md` §1). If unclear, ask the user.
    Then read `workspace/<repo>/CLAUDE.md` if it exists (precedence in `CLAUDE.md` §1).
-   All following steps run inside `workspace/<repo>/`. Multi-repo ticket: repeat steps 3–4 per
-   repo, one spec each, cross-linked.
-4. Search `workspace/<repo>/specs/` for an existing spec covering the affected feature (by name,
+   Spec Kit steps run inside `docs/<repo>/`; read code from `workspace/<repo>/`. If
+   `docs/<repo>/.specify/` does not exist, stop and point the user to README → Setup step 4.
+   Multi-repo ticket: repeat steps 3–4 per repo, one spec each, cross-linked.
+4. Search `docs/<repo>/specs/` for an existing spec covering the affected feature (by name,
    FR ids, routes, modules touched).
 
 ## 2. Classify
@@ -25,8 +26,8 @@ State the lane (0/1/2/3) and a one-line reason.
 - **Lane 2 or 3:** continue.
 
 ## 3. Spec
-`cd workspace/<repo>` before any `/speckit-*` command so its scripts and paths resolve inside
-the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
+`cd docs/<repo>` before any `/speckit-*` command so its scripts and paths resolve inside
+`docs/<repo>`, not the code repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
 ### Lane 2 — change to existing feature
 1. If no spec exists for the feature, create it once with `/speckit-specify`, giving it a
    description of the **current** behavior read from the code (not the ticket's change). This
@@ -89,10 +90,12 @@ Run `/speckit-analyze`. Fix CRITICAL/HIGH findings in spec/plan/tasks and re-run
 ## 5. Report and stop
 Output:
 - Lane and reason
-- Target repo(s) and spec path(s) (`workspace/<repo>/specs/<feature>/`), created or updated
+- Target repo(s) and spec path(s) (`docs/<repo>/specs/<feature>/`), created or updated
 - AC status (confirmed / proposed-pending)
 - Task count, `[manual]` tasks, open questions
 - Breaking contract changes and migrations (BE), if any
-- Next step: `/build workspace/<repo>/specs/<feature>` (in dependency order if multi-repo: BE first)
+- Docs commit in the root repo (staging only `docs/<repo>/`): `docs(<repo>): <KEY> add spec`
+  (Lane 3) or `docs(<repo>): <KEY> update spec` (Lane 2)
+- Next step: `/build docs/<repo>/specs/<feature>` (in dependency order if multi-repo: BE first)
 
 Do **not** run `/speckit-implement`, `writing-plans`, or start building.
