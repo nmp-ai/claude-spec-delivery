@@ -290,6 +290,16 @@ the requirement list is always the current truth.
 Applies to repos of type BE (§1). Stack-specific commands and tools come from the repo
 `CLAUDE.md`, its constitution, and §6.
 
+**Skills** (reference only; they do not change this workflow)
+- `api-design-principles`: when designing or changing the API contract (`/speckit-plan`,
+  contract tasks) and when reviewing endpoint tasks: naming, status codes, error format,
+  pagination, versioning, breaking changes.
+- `supabase-postgres-best-practices`: for schema, migration, and query tasks in a Postgres
+  repo: data types, constraints, indexes, locking, N+1, pagination. Its Supabase-specific
+  notes (Supabase CLI, Supabase auth/RLS helpers) apply only if the repo uses Supabase.
+- Safety rules here (migrations, environments, credentials) always win over a skill. The
+  constitution and repo `CLAUDE.md` win over a skill on technical conventions.
+
 **API contract**
 - **Source of truth:**
   - BE repo already has an OpenAPI file (checked in, or generated from code, e.g. springdoc,

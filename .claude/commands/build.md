@@ -44,9 +44,10 @@ Use `superpowers:subagent-driven-development`, taking tasks **in order from `tas
    - BE task → follow `CLAUDE.md` §5 "Backend work": update the contract (repo OpenAPI file,
      or the spec's `contracts/` file if the repo has none) in the same task as the code; write
      migrations but never apply them to a persistent DB (integration tests may use a throwaway
-     test DB); integration
-     tests run against a real DB, not mocks; do not start a dev server that auto-applies a
-     migration the user has not applied yet.
+     test DB); integration tests run against a real DB, not mocks; do not start a dev server
+     that auto-applies a migration the user has not applied yet. Use `api-design-principles`
+     for endpoint/contract work and `supabase-postgres-best-practices` for schema, migration,
+     and query work on Postgres (`CLAUDE.md` §5 "Backend work" → Skills).
    - Migration apply task (`[manual]`) → hand the exact command to the user and wait for
      confirmation before tasks that need the new schema on the dev server.
    - `[manual]` task → perform the steps if possible and record the result; otherwise hand the
@@ -60,7 +61,9 @@ Use `superpowers:subagent-driven-development`, taking tasks **in order from `tas
    BE tasks also require, attached to the review, the evidence for each check the task lists
    (`CLAUDE.md` §5 "BE verification" table): integration test output, recorded endpoint calls
    on the local dev server for every AC case (request + status + relevant body, tokens masked),
-   contract test output against the contract, and `/security-review` results.
+   contract test output against the contract, and `/security-review` results. The code-quality
+   review of BE tasks also checks endpoints against `api-design-principles` and schema/query
+   changes against `supabase-postgres-best-practices` (Postgres repos).
 3. **On pass** — immediately tick the task `[x]` in `tasks.md`, then commit:
    `<type>(<scope>): <KEY> <task id> <summary>` (use the `git-commit` skill). Never batch ticks.
 4. **On failure** — fix and re-review. After **2** failed attempts on the same task, stop: write a

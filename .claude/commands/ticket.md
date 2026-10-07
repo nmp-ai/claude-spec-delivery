@@ -52,7 +52,9 @@ the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
    outcome into step 2.
 2. `/speckit-specify` with the ticket content, AC, and Figma links.
 3. `/speckit-clarify`.
-4. `/speckit-plan`. BE repo: ask for the API contract as OpenAPI. If the repo already has an
+4. `/speckit-plan`. BE repo: design the contract with `api-design-principles` (and
+   `supabase-postgres-best-practices` for the data model on Postgres), and ask for the API
+   contract as OpenAPI. If the repo already has an
    OpenAPI file, `contracts/` only notes the endpoints added/changed and links to it;
    otherwise `contracts/` holds the OpenAPI file (`CLAUDE.md` §5 "Backend work").
    FE repo of a fullstack ticket: `contracts/` must not define API endpoints; link to the BE

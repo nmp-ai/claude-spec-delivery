@@ -28,6 +28,8 @@ contract owned by the BE side.
 ├── .claude/skills/vercel-react-best-practices # React/Next performance rules (from vercel-labs/agent-skills)
 ├── .claude/skills/vercel-composition-patterns # React composition patterns (from vercel-labs/agent-skills)
 ├── .claude/skills/frontend-design-system # spacing, tokens, component reuse (team skill)
+├── .claude/skills/api-design-principles # BE: REST/GraphQL API design reference (from wshobson/agents)
+├── .claude/skills/supabase-postgres-best-practices # BE: Postgres schema/query/migration rules (from supabase/agent-skills)
 ├── .claude/commands/
 │   ├── ticket.md             # /ticket <KEY>
 │   ├── build.md              # /build <workspace/repo/specs/feature>
@@ -126,6 +128,8 @@ contract owned by the BE side.
    | `vitest` | `antfu/skills` → `skills/vitest/` (`SKILL.md`, `GENERATION.md`, `references/*.md`) |
    | `vercel-react-best-practices` | `vercel-labs/agent-skills` → `skills/react-best-practices/` (whole folder) |
    | `vercel-composition-patterns` | `vercel-labs/agent-skills` → `skills/composition-patterns/` (whole folder) |
+   | `api-design-principles` | `wshobson/agents` → `plugins/backend-development/skills/api-design-principles/` (whole folder), root `LICENSE` → `LICENSE.txt` |
+   | `supabase-postgres-best-practices` | `supabase/agent-skills` → `skills/supabase-postgres-best-practices/` (whole folder), root `LICENSE` → `LICENSE.txt` |
 
    `frontend-design-system` is maintained in this template; edit it here.
 
