@@ -58,6 +58,17 @@ the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
 - UI tasks include "verify with agent-browser". If the ticket links Figma, reference the exact
   Figma node URL and verify against its screenshot; otherwise verify against the AC and the
   existing design system (`CLAUDE.md` §5).
+- BE tasks (`CLAUDE.md` §5 "Backend work"):
+  - Contract first: a task that creates/updates the OpenAPI file in `contracts/` comes before
+    the endpoint tasks that implement it. Lane 2 on a spec without `contracts/`: the first
+    task documents the current endpoints as-is, then a second applies the change.
+  - Each migration is its own task, followed by a `[manual]` task with the exact apply
+    command for the user. Tasks that need the new schema on the dev server come after it.
+  - Each endpoint task lists its verification: integration test, endpoint calls per AC case,
+    contract test, and `/security-review` when it touches auth, input, queries, or secrets.
+  - Breaking contract changes are flagged to the user before the tasks are written.
+- Fullstack ticket: the FE spec links to the BE spec's `contracts/` file for every endpoint it
+  uses and does not redefine payloads. Its API-dependent tasks note the BE spec they depend on.
 - Non-automatable checks are separate tasks marked `[manual]` with concrete steps.
 - Add an empty `## Build log` section at the end of `tasks.md` if missing.
 
@@ -70,6 +81,7 @@ Output:
 - Target repo(s) and spec path(s) (`workspace/<repo>/specs/<feature>/`), created or updated
 - AC status (confirmed / proposed-pending)
 - Task count, `[manual]` tasks, open questions
-- Next step: `/build workspace/<repo>/specs/<feature>` (in dependency order if multi-repo)
+- Breaking contract changes and migrations (BE), if any
+- Next step: `/build workspace/<repo>/specs/<feature>` (in dependency order if multi-repo: BE first)
 
 Do **not** run `/speckit-implement`, `writing-plans`, or start building.

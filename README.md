@@ -2,6 +2,8 @@
 
 A Claude Code workspace that takes Jira tickets to merged, documented code using
 **Spec Kit** (spec → plan → tasks) and **Superpowers** (subagents, TDD, review).
+It covers fullstack work: frontend (FE) and backend (BE) repos side by side, with the API
+contract shared through the BE spec.
 
 - `CLAUDE.md` is the rulebook: lanes, workflow, guardrails, and per-repo commands.
 - `.claude/commands/` adds three shortcuts: `/ticket`, `/build`, and `/fix`.
@@ -35,6 +37,7 @@ A Claude Code workspace that takes Jira tickets to merged, documented code using
         ├── CLAUDE.md         # optional: repo-specific instructions
         ├── .specify/         # Spec Kit config + constitution
         ├── specs/<NNN-feature>/{spec,plan,tasks}.md
+        ├── specs/<NNN-feature>/contracts/  # BE: OpenAPI contract (source of truth for the API)
         └── ...code
 ```
 
@@ -50,6 +53,7 @@ A Claude Code workspace that takes Jira tickets to merged, documented code using
 | Atlassian MCP | Read Jira tickets | Connect Atlassian in Claude Code (`/mcp`) or in your claude.ai connectors |
 | Figma MCP | Design context + screenshots (optional) | Connect Figma in Claude Code (`/mcp`) or in your claude.ai connectors |
 | `agent-browser` CLI | UI verification (used by the `agent-browser` and `next-dev-loop` skills; `next-dev-loop` needs ≥ 0.31.1) | `npm i -g agent-browser && agent-browser install` |
+| Docker (or the container runtime your BE tests use) | BE integration tests against a throwaway database | https://docs.docker.com/get-docker/ |
 
 > Install commands change over time. Check each tool's own docs if one fails.
 
@@ -63,9 +67,10 @@ A Claude Code workspace that takes Jira tickets to merged, documented code using
    ```bash
    git clone <repo-url> workspace/<repo>
    ```
-   - Add a row for it to the repo table in `CLAUDE.md` §1.
+   - Add a row for it to the repo table in `CLAUDE.md` §1, with its type (FE or BE).
    - Add its lint, typecheck, test, and build commands to `CLAUDE.md` §6. If the repo already
-     has its own `CLAUDE.md` listing them, just point to it.
+     has its own `CLAUDE.md` listing them, just point to it. BE repos also need integration
+     test, contract test, dev server, and migration create/apply commands.
    - A repo `CLAUDE.md` is read automatically once a ticket targets that repo. The repo file
      wins on technical rules and the root file wins on process; conflicts are flagged to you
      (`CLAUDE.md` §1). Don't `@import` repo files into the root `CLAUDE.md`.
@@ -235,6 +240,15 @@ If the fix turns out bigger than Lane 1, it stops and suggests `/ticket` instead
   ([vercel-labs/agent-browser](https://www.skills.sh/vercel-labs/agent-browser/agent-browser))
   is a stub that loads its guide from the CLI, so the CLI must be installed. On Next.js 16.3+
   with Turbopack, Claude verifies through `next-dev-loop`, which also reads `/_next/mcp`.
+- **Backend:**
+  - The API contract is the OpenAPI file in the BE spec's `contracts/`. It changes in the same
+    task as the code. Breaking changes are flagged to you first.
+  - Claude writes migrations but never applies them to a real database (dev, staging, prod).
+    Applying is a `[manual]` task for you. Integration tests may use a throwaway test DB.
+  - Every BE task is verified with integration tests on a real DB, endpoint calls on the local
+    dev server for each AC case, contract tests, and `/security-review` when it touches auth,
+    input, queries, or secrets.
+  - A fix that needs a migration or a contract change is Lane 2, not `/fix`.
 - **Stuck after 2 attempts:** Claude stops, writes a blocker note, and asks you. It doesn't keep guessing.
 - **`[manual]` tasks:** tasks that can't be tested automatically have written steps. They stay unticked until verified.
 - **Commits:** Claude uses the `git-commit` skill. The format is Conventional Commits with the
@@ -252,7 +266,10 @@ The full rules are in [`CLAUDE.md`](CLAUDE.md).
 If a ticket touches more than one repo (for example, the API and the web app):
 
 1. `/ticket` creates **one spec per repo**, cross-linked with the same ticket key.
-2. Run `/build` for each spec in dependency order (usually the API before the UI).
+2. The API contract lives only in the BE spec's `contracts/`. The FE spec links to it instead
+   of redefining endpoints.
+3. Run `/build` for each spec in dependency order: BE first, then FE. If the BE build wrote a
+   migration, apply it (the `[manual]` task) before building the FE against the dev server.
 
 ---
 
