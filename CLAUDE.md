@@ -83,7 +83,10 @@ and ask the user.
 - **Global rules:** in this project, this file and `.claude/commands/` override user-level
   rules (`~/.claude/CLAUDE.md`) and plugins on process. Do not use oh-my-claudecode (OMC)
   skills, modes, or agents (e.g. `plan`, `ralplan`, `ralph`, `autopilot`, `team`, `executor`);
-  Superpowers drives execution. The user's review of `spec.md`/`tasks.md` after `/ticket` is the
+  Superpowers drives execution. Plugin or built-in skills that overlap Superpowers (debugging,
+  code review, test strategy, docs, design), e.g. `engineering:*`, `/code-review`, `/simplify`,
+  are not part of this workflow: use the Superpowers skill named in the command instead. The
+  overlapping `engineering:*` skills are denied in `.claude/settings.json`. The user's review of `spec.md`/`tasks.md` after `/ticket` is the
   plan approval for `/build`: subagents do not stop to ask for approval before each task.
 - `tasks.md` is the **only** plan. Never create a second plan.
   - **Forbidden:** `/speckit-implement`, `superpowers:writing-plans`, `superpowers:executing-plans`.

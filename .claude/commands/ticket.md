@@ -55,7 +55,9 @@ the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
 
 ### Both lanes — task list rules
 - Every task: one verifiable outcome, ≤ ~5 files (`CLAUDE.md` §5).
-- UI tasks reference the exact Figma node URL and include "verify with agent-browser against Figma screenshot".
+- UI tasks include "verify with agent-browser". If the ticket links Figma, reference the exact
+  Figma node URL and verify against its screenshot; otherwise verify against the AC and the
+  existing design system (`CLAUDE.md` §5).
 - Non-automatable checks are separate tasks marked `[manual]` with concrete steps.
 - Add an empty `## Build log` section at the end of `tasks.md` if missing.
 

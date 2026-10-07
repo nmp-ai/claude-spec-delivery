@@ -26,7 +26,19 @@
       "Skill(next-best-practices)",
       "Skill(next-best-practices *)",
       "Skill(wiki)",
-      "Skill(wiki *)"
+      "Skill(wiki *)",
+      "Skill(engineering:code-review)",
+      "Skill(engineering:code-review *)",
+      "Skill(engineering:debug)",
+      "Skill(engineering:debug *)",
+      "Skill(engineering:testing-strategy)",
+      "Skill(engineering:testing-strategy *)",
+      "Skill(engineering:documentation)",
+      "Skill(engineering:documentation *)",
+      "Skill(engineering:architecture)",
+      "Skill(engineering:architecture *)",
+      "Skill(engineering:system-design)",
+      "Skill(engineering:system-design *)"
     ]
   }
 }

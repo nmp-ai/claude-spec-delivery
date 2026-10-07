@@ -15,7 +15,7 @@ A Claude Code workspace that takes Jira tickets to merged, documented code using
 .
 ├── CLAUDE.md                 # process rules (read by Claude Code automatically)
 ├── README.md
-├── .claude/settings.json     # denies speckit-implement/converge/taskstoissues, superpowers writing/executing-plans, and global skills not shipped here
+├── .claude/settings.json     # denies speckit-implement/converge/taskstoissues, superpowers writing/executing-plans, overlapping engineering:* skills, and global skills not shipped here
 ├── .claude/skills/speckit-*  # Spec Kit skills (copied from a repo, run inside the repo)
 ├── .claude/skills/git-commit # Conventional Commits skill (from github/awesome-copilot)
 ├── .claude/skills/agent-browser # UI verification skill (from vercel-labs/agent-browser)
@@ -134,7 +134,10 @@ A Claude Code workspace that takes Jira tickets to merged, documented code using
    **Global rules and plugins.** `CLAUDE.md` §2 tells Claude that this template's process
    overrides your `~/.claude/CLAUDE.md` and plugins: no oh-my-claudecode (OMC) skills, modes, or
    agents, and no per-task approval prompts during `/build` (your review after `/ticket` is the
-   approval). If a global rule still gets in the way, disable that plugin for this project.
+   approval). Plugin skills that overlap Superpowers (`engineering:code-review`, `debug`,
+   `testing-strategy`, `documentation`, `architecture`, `system-design`) are denied in
+   `.claude/settings.json`; add others the same way if a new plugin competes. If a global rule
+   still gets in the way, disable that plugin for this project.
 6. **Check the Spec Kit names.** Spec Kit 1.x uses `/speckit-specify`, `/speckit-plan`, and so on
    (hyphen). Dotted names (`/speckit.specify`) don't work as commands in Claude Code. If your
    version differs, update `CLAUDE.md` and `.claude/commands/`.
