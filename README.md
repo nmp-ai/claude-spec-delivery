@@ -15,7 +15,7 @@ A Claude Code workspace that takes Jira tickets to merged, documented code using
 .
 ├── CLAUDE.md                 # process rules (read by Claude Code automatically)
 ├── README.md
-├── .claude/settings.json     # denies speckit-implement/converge/taskstoissues and global skills not shipped here
+├── .claude/settings.json     # denies speckit-implement/converge/taskstoissues, superpowers writing/executing-plans, and global skills not shipped here
 ├── .claude/skills/speckit-*  # Spec Kit skills (copied from a repo, run inside the repo)
 ├── .claude/skills/git-commit # Conventional Commits skill (from github/awesome-copilot)
 ├── .claude/skills/agent-browser # UI verification skill (from vercel-labs/agent-browser)
@@ -85,6 +85,8 @@ A Claude Code workspace that takes Jira tickets to merged, documented code using
    `speckit-taskstoissues` stay available only when you type them yourself. The root
    `.claude/settings.json` also denies all three for Claude, which covers repos you haven't
    patched yet.
+   If `.specify/extensions.yml` exists, set `enabled: false` on every `speckit.git.*` hook
+   (branch creation, auto-commit). `/build` creates the branch and commits follow `CLAUDE.md` §5.
    Then run `/speckit-constitution` in Claude Code to record that repo's stack, coding
    standards, and test requirements. Technical rules go in the constitution, not in `CLAUDE.md`.
 5. **Spec Kit skills at the root.** Claude Code started at the root does not see skills inside
@@ -208,7 +210,9 @@ If the fix turns out bigger than Lane 1, it stops and suggests `/ticket` instead
 
 ## Rules worth knowing
 
-- **One plan only:** `tasks.md`. Don't run `/speckit-implement` or Superpowers `writing-plans`.
+- **One plan only:** `tasks.md`. Don't run `/speckit-implement` or Superpowers `writing-plans`
+  (both are denied in `.claude/settings.json`). Lane 3 brainstorming stops once the idea is
+  agreed, without writing its own design doc.
 - **One spec per feature.** Changes to an existing feature update its spec with a `Change:` section.
 - **Current feature:** Spec Kit picks the feature from `workspace/<repo>/.specify/feature.json`,
   which only `/speckit-specify` writes. `/ticket` (Lane 2) and `/build` set it to the target

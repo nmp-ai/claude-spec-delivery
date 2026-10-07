@@ -28,7 +28,10 @@ State the lane (0/1/2/3) and a one-line reason.
 `cd workspace/<repo>` before any `/speckit-*` command so its scripts and paths resolve inside
 the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
 ### Lane 2 — change to existing feature
-1. If no spec exists for the feature, create it once describing current behavior (read from code).
+1. If no spec exists for the feature, create it once with `/speckit-specify`, giving it a
+   description of the **current** behavior read from the code (not the ticket's change). This
+   creates `specs/<NNN-feature>/` and points `.specify/feature.json` at it. Do not run any git
+   hook it announces (`CLAUDE.md` §2). Then continue with step 2 on that spec.
    If it exists, write `.specify/feature.json` as `{ "feature_directory": "specs/<NNN-feature>" }`
    so the `/speckit-*` skills below act on this spec, not the last one specified.
 2. Append `## Change: <KEY> — <title>` to the existing `spec.md` (format in `CLAUDE.md` §4) and
@@ -42,7 +45,9 @@ the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
    - No `tasks.md` yet → run `/speckit-tasks`.
 
 ### Lane 3 — new feature
-1. Optional: `superpowers:brainstorming` to shape the idea (only here, before specify).
+1. Optional: `superpowers:brainstorming` to shape the idea (only here, before specify). Stop once
+   the idea is agreed: no design doc, no hand-off to `writing-plans` (`CLAUDE.md` §2). Feed the
+   outcome into step 2.
 2. `/speckit-specify` with the ticket content, AC, and Figma links.
 3. `/speckit-clarify`.
 4. `/speckit-plan`.

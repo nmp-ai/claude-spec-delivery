@@ -88,7 +88,11 @@ and ask the user.
 - `tasks.md` is the **only** plan. Never create a second plan.
   - **Forbidden:** `/speckit-implement`, `superpowers:writing-plans`, `superpowers:executing-plans`.
   - Execution of `tasks.md` uses `superpowers:subagent-driven-development` only (via `/build`).
-- `superpowers:brainstorming` is allowed **only in Lane 3**, before `/speckit-specify`.
+- `superpowers:brainstorming` is allowed **only in Lane 3**, before `/speckit-specify`, and only
+  to shape the idea in conversation. Stop it once the idea is agreed: do not let it write its own
+  design doc or hand off to `writing-plans`. Its outcome goes into `/speckit-specify` as input.
+- Root `.claude/settings.json` denies `Skill(superpowers:writing-plans)` and
+  `Skill(superpowers:executing-plans)`. Do not remove these blocks or work around them.
 - One feature = one spec folder. Changing an existing feature **updates its existing spec**;
   never create a duplicate spec for it.
 - Spec Kit names: Spec Kit ≥ 1.x installs Claude **skills** named `/speckit-<cmd>` (hyphen),
@@ -124,6 +128,10 @@ inside `workspace/<repo>/` at startup (verified: they return `Unknown command`).
   `{ "feature_directory": "specs/<NNN-feature>" }`. Otherwise the skills act on whichever
   feature was specified last.
 - Spec Kit core does **not** create git branches. `/build` creates the feature branch.
+- Spec Kit extension hooks for git (`speckit.git.*` in `workspace/<repo>/.specify/extensions.yml`,
+  e.g. a `before_specify` branch hook or auto-commit hooks) must stay disabled
+  (`enabled: false`): branches come from `/build`, commits follow §5. If a `/speckit-*` skill
+  announces a git hook, do not run it; tell the user to disable it (README → Setup step 4).
 - When Spec Kit is upgraded, re-copy the skills to the root (README → Setup).
 
 ---
