@@ -46,9 +46,14 @@ The **Type** column (FE / BE) decides which guardrails in §5 apply: "UI work" a
   verify commands all run inside `workspace/<repo>/`.
 - A ticket spanning several repos: one spec per repo (in each repo's `specs/`), each linking to
   the other(s) and the same ticket key. Build them in dependency order (e.g. API before UI).
-- Fullstack ticket (BE + FE): the API contract is defined **only** in the BE spec's
-  `contracts/` (§5 "Backend work"). The FE spec links to that file instead of redefining
-  endpoints or payloads. Build the BE spec first.
+- Fullstack ticket (BE + FE): the API contract is defined only on the BE side (§5 "Backend
+  work"). The FE spec links to it instead of redefining endpoints or payloads. Build the BE
+  spec first.
+- Which API the FE uses while verifying (§5 "UI verification"):
+  - Fullstack ticket → the FE dev server points to the **local BE** dev server running the BE
+    feature branch. BE dev-server rules apply (§5 "Backend work").
+  - FE-only ticket → the FE dev server uses its own configured environment (`.env` of the FE
+    repo), even if that is a shared/staging API.
 
 ### Repo-level `CLAUDE.md`
 
@@ -65,7 +70,7 @@ file in that repo is read), so it is **not** guaranteed to be in context. Theref
 | Topic | Wins |
 |---|---|
 | Process: lanes, `tasks.md` as the only plan, forbidden commands, ticking, docs sync, stuck rule | This root `CLAUDE.md` |
-| Safety: never applying migrations to a persistent DB, never calling staging/production, no DB mocks in integration tests (§5 "Backend work") | This root `CLAUDE.md` |
+| Safety: never applying migrations to a persistent DB, BE checks never calling staging/production, no DB mocks in integration tests, test credentials and secrets (§5 "Backend work", "Test credentials and secrets") | This root `CLAUDE.md` |
 | Technical: conventions, architecture, commands, test setup, repo-specific do/don't | Repo `CLAUDE.md` (and its constitution) |
 
 If the repo `CLAUDE.md` contradicts a **process** or **safety** rule here (e.g. tells Claude to
@@ -83,7 +88,7 @@ migration), do not pick one silently: point out the conflict and ask the user.
 | Execution (TDD, subagents, review) | Superpowers | `tasks.md` checkboxes |
 | UI design | Figma MCP | Figma frame linked in the ticket/spec |
 | UI verification | `agent-browser` skill + CLI | Screenshots of the running app |
-| API contract | Spec Kit (`/speckit-plan`) | BE spec's `specs/<NNN-feature>/contracts/` (OpenAPI) |
+| API contract | BE repo / Spec Kit (`/speckit-plan`) | The BE repo's own OpenAPI file if it has one; otherwise the BE spec's `contracts/` (§5) |
 | BE verification | Repo test runner + dev server | Integration/contract test output, recorded endpoint calls |
 | Feature documentation | Spec Kit spec | `spec.md` + its `Implementation notes` section |
 
@@ -95,7 +100,8 @@ migration), do not pick one silently: point out the conflict and ask the user.
   Superpowers drives execution. Plugin or built-in skills that overlap Superpowers (debugging,
   code review, test strategy, docs, design), e.g. `engineering:*`, `/code-review`, `/simplify`,
   are not part of this workflow: use the Superpowers skill named in the command instead. The
-  overlapping `engineering:*` skills are denied in `.claude/settings.json`. The user's review
+  overlapping `engineering:*` skills are denied in `.claude/settings.json`. Exception: the
+  built-in `/security-review` is part of BE verification (§5 "Backend work"). The user's review
   of `spec.md`/`tasks.md` after `/ticket` is the plan approval for `/build`: subagents do not
   stop to ask for approval before each task.
 - `tasks.md` is the **only** plan. Never create a second plan.
@@ -219,6 +225,8 @@ spec has no `tasks.md` yet.
 - **After:** <new behavior>
 - **Acceptance criteria:** <list>
 - **Affected requirements:** <FR-xxx ids updated/added>
+- **Contract change (BE):** <endpoints changed, breaking yes/no, FE impact — or "none">
+- **Migrations (BE):** <migrations to write, destructive yes/no — or "none">
 ```
 
 Update the affected requirements in place as well; the `Change:` section is the changelog,
@@ -265,6 +273,12 @@ the requirement list is always the current truth.
   so the user can watch is allowed; the check itself stays in `agent-browser`.
 - Run against the repo's dev server (§6). Check every state the task touches (loading, empty,
   error, success) and the responsive breakpoints in the spec.
+- API behind the FE (§1 "Which API the FE uses"): fullstack ticket → local BE dev server on
+  the BE feature branch, with the BE's migrations applied by the user; start it under the BE
+  dev-server rules (§5 "Backend work") or ask the user to start it. FE-only ticket → the FE's
+  configured environment. On a shared/staging API, use test accounts only (see "Test
+  credentials and secrets") and ask the user before any action that creates, changes, or
+  deletes shared data beyond what the AC check needs.
 - With Figma: compare the `agent-browser` screenshot against Figma `get_screenshot`.
   Without Figma: check against the spec's AC and the existing design system.
 - Scope is the local app under development only. Do not use its Slack, Electron, cloud, or
@@ -277,15 +291,20 @@ Applies to repos of type BE (§1). Stack-specific commands and tools come from t
 `CLAUDE.md`, its constitution, and §6.
 
 **API contract**
-- The contract is the OpenAPI file in the BE spec's `contracts/` folder (generated by
-  `/speckit-plan`, kept up to date by hand after that). There is no other contract file.
-  `/speckit-plan` picks a contract format per project type, so when running it for a BE
-  repo, ask explicitly for an OpenAPI file (e.g. `contracts/openapi.yaml`).
+- **Source of truth:**
+  - BE repo already has an OpenAPI file (checked in, or generated from code, e.g. springdoc,
+    NestJS Swagger) → that file is the contract. Record its path in the repo `CLAUDE.md` or
+    §6. The spec's `contracts/` holds only a short note of the endpoints this feature adds or
+    changes, linking to that file; it never copies the full schema.
+  - BE repo has no OpenAPI → the contract is the OpenAPI file in the BE spec's `contracts/`
+    (e.g. `contracts/openapi.yaml`), one per feature.
+- `/speckit-plan` picks a contract format per project type, so when running it for a BE repo,
+  ask explicitly for OpenAPI and tell it which of the two cases above applies.
 - FE specs never define API contracts. When running `/speckit-plan` for an FE repo, its
-  `contracts/` (if any) holds only UI/component contracts and links to the BE spec's OpenAPI
-  file for every endpoint used.
-- Changing an endpoint, payload, status code, or error shape means updating that file in the
-  same task as the code.
+  `contracts/` (if any) holds only UI/component contracts and links to the BE contract for
+  every endpoint used.
+- Changing an endpoint, payload, status code, or error shape means updating the contract (the
+  repo's OpenAPI file, or regenerating it, or the spec's file) in the same task as the code.
 - Breaking change (removed/renamed field, new required input, changed type or status code):
   tell the user before writing it, and record it in the spec's `## Change: <KEY>` section
   with the FE impact. If an FE repo consumes the endpoint, its spec needs a matching change.
@@ -331,11 +350,28 @@ A task's verification list in `tasks.md` names the checks it needs; reviewers ch
    Never call staging or production. If the dev server needs a migration the user has not
    applied yet, or would auto-apply it on startup (see "Database migrations"), hand over the
    `[manual]` step and wait.
-3. **Contract tests**: responses match the OpenAPI file in `contracts/` (repo's contract-test
-   command in §6, or schema validation of the recorded responses if the repo has none).
+3. **Contract tests**: responses match the contract (the repo's OpenAPI file, or the spec's
+   `contracts/` file when the repo has none). Use the repo's contract-test command in §6, or
+   schema validation of the recorded responses if the repo has none.
 4. **Security review**: run `/security-review` on tasks that touch authentication or
    authorization, input handling, database queries, file or network access, or secrets.
    Fix findings or record accepted risks in `Implementation notes`.
+
+**Before the first test run** in a BE repo (baseline included, in `/build` and `/fix`):
+check that the container runtime is available and that integration tests use a throwaway
+database (see "Database migrations" and check 1 above). Do this before running the baseline,
+not only before a task.
+
+### Test credentials and secrets
+Applies to endpoint calls (BE) and UI checks (FE).
+- Use only test users, tokens, and API keys from the repo's seed, fixture, or example-config
+  files, or ones the user gives for this purpose. Never real user accounts or production
+  credentials.
+- If a check needs credentials that don't exist (e.g. a role with no seeded user), ask the
+  user; do not create accounts on a shared environment.
+- Read `.env` files only to find which env/host the app uses. Never copy secrets into
+  `tasks.md`, specs, review notes, commit messages, or chat; mask tokens in recorded
+  requests (e.g. `Authorization: Bearer ***`).
 
 ### Ticket missing acceptance criteria
 - Do not invent AC silently. Draft proposed AC from the description, mark them
@@ -343,6 +379,7 @@ A task's verification list in `tasks.md` names the checks it needs; reviewers ch
   fixing (Lane 1). Optionally post them as a Jira comment **only if the user asks**.
 
 ### Baseline has failing tests
+- BE repo: run the "Before the first test run" checks (§5 "Backend work") first.
 - Before building, run the test suite once and record failures as the **baseline** in the
   `## Build log` section of `tasks.md` (Lane 2/3) or in the fix summary (Lane 1).
 - Baseline failures are not regressions and are not fixed unless the ticket covers them.
@@ -412,6 +449,7 @@ duplicating them — the repo file is the source of truth.
 | Single test file | `<test command> <path>` |
 | Integration tests (throwaway DB) | `<integration test command>` |
 | Contract tests | `<contract test command, if any>` |
+| OpenAPI file (contract) | `<path, or generate command; "none" if the repo has none>` |
 | Build | `<build command>` |
 | Run dev server | `<dev command>` |
 | Create migration (write only) | `<migration create command>` |

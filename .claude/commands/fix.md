@@ -24,7 +24,9 @@ Follow `CLAUDE.md` sections 4–6. No Spec Kit, no plan files.
   contract change stays here under the limits in `CLAUDE.md` §5 "Hotfix".
 
 ## 3. Baseline (Lane 1)
-Run the relevant tests once and note pre-existing failures. They are not regressions.
+BE repo: first run the "Before the first test run" checks (`CLAUDE.md` §5 "Backend work");
+stop and ask if either fails. Then run the relevant tests once and note pre-existing failures.
+They are not regressions.
 
 ## 4. Fix
 **Lane 0:** make the edit → run lint/typecheck/build from `CLAUDE.md` §6.

@@ -37,8 +37,9 @@ the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
 2. Append `## Change: <KEY> — <title>` to the existing `spec.md` (format in `CLAUDE.md` §4) and
    update the affected requirements in place. Do **not** create a new spec folder.
 3. Run `/speckit-clarify` if anything is ambiguous.
-4. Update `plan.md` for the change (BE: and the OpenAPI file in `contracts/`, same rules as
-   Lane 3 step 4). Then:
+4. Update `plan.md` for the change (BE: and the contract notes in `contracts/`, same rules as
+   Lane 3 step 4). Fill the `Contract change` and `Migrations` lines of the `Change:` section.
+   Then:
    - `tasks.md` exists → do **not** run `/speckit-tasks` (it regenerates the file and drops
      ticked tasks and the `## Build log`). Append the new tasks by hand under a
      `## Change: <KEY>` phase, continuing the existing task IDs, same checklist format,
@@ -51,9 +52,11 @@ the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
    outcome into step 2.
 2. `/speckit-specify` with the ticket content, AC, and Figma links.
 3. `/speckit-clarify`.
-4. `/speckit-plan`. BE repo: ask for the API contract as an OpenAPI file in `contracts/`.
+4. `/speckit-plan`. BE repo: ask for the API contract as OpenAPI. If the repo already has an
+   OpenAPI file, `contracts/` only notes the endpoints added/changed and links to it;
+   otherwise `contracts/` holds the OpenAPI file (`CLAUDE.md` §5 "Backend work").
    FE repo of a fullstack ticket: `contracts/` must not define API endpoints; link to the BE
-   spec's OpenAPI file instead (`CLAUDE.md` §5 "Backend work").
+   contract instead.
 5. `/speckit-tasks`.
 
 ### Both lanes — task list rules
@@ -62,17 +65,19 @@ the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
   Figma node URL and verify against its screenshot; otherwise verify against the AC and the
   existing design system (`CLAUDE.md` §5).
 - BE tasks (`CLAUDE.md` §5 "Backend work"):
-  - Contract first: a task that creates/updates the OpenAPI file in `contracts/` comes before
-    the endpoint tasks that implement it. Lane 2 on a spec without `contracts/`: the first
-    task documents the current endpoints as-is, then a second applies the change.
+  - Contract first: a task that creates/updates the contract (repo OpenAPI file, or the spec's
+    `contracts/` file if the repo has none) comes before the endpoint tasks that implement it.
+    Lane 2 on a repo with no OpenAPI and a spec without `contracts/`: the first task documents
+    the current endpoints as-is, then a second applies the change.
   - Each migration is its own task, followed by a `[manual]` task with the exact apply
     command for the user. Tasks that need the new schema on the dev server come after it.
   - Each BE task lists the checks it needs, per the table in `CLAUDE.md` §5 "BE verification"
     (e.g. endpoint task: integration test, endpoint calls per AC case, contract test; plus
     `/security-review` when it touches auth, input, queries, or secrets).
   - Breaking contract changes are flagged to the user before the tasks are written.
-- Fullstack ticket: the FE spec links to the BE spec's `contracts/` file for every endpoint it
-  uses and does not redefine payloads. Its API-dependent tasks note the BE spec they depend on.
+- Fullstack ticket: the FE spec links to the BE contract for every endpoint it uses and does
+  not redefine payloads. Its API-dependent tasks note the BE spec they depend on and that UI
+  checks run against the local BE dev server (`CLAUDE.md` §1).
 - Non-automatable checks are separate tasks marked `[manual]` with concrete steps.
 - Add an empty `## Build log` section at the end of `tasks.md` if missing.
 

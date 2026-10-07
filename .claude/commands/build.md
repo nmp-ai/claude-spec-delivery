@@ -21,7 +21,9 @@ Follow `CLAUDE.md` sections 2–6. `tasks.md` is the only plan.
    its default branch.
 
 ## 2. Baseline
-Run the target repo's verify commands from `CLAUDE.md` §6 once. Record results (especially pre-existing
+BE repo: first run the "Before the first test run" checks (`CLAUDE.md` §5 "Backend work":
+container runtime available, integration tests use a throwaway DB). Stop and ask if either fails.
+Then run the target repo's verify commands from `CLAUDE.md` §6 once. Record results (especially pre-existing
 failures) under `## Build log` → `Baseline` in `tasks.md`. Baseline failures are not regressions.
 
 ## 3. Execute tasks
@@ -36,9 +38,13 @@ Use `superpowers:subagent-driven-development`, taking tasks **in order from `tas
      system; `frontend-design` only when a new visual direction is needed (`CLAUDE.md` §5).
    - UI task → check the result in the running app with the `agent-browser` skill only
      (`next-dev-loop` on Next.js 16.3+ with Turbopack; `CLAUDE.md` §5 "UI verification").
-   - BE task → follow `CLAUDE.md` §5 "Backend work": update the `contracts/` OpenAPI file in
-     the same task as the code; write migrations but never apply them to a persistent DB
-     (integration tests may use a throwaway test DB; check the test DB config first); integration
+   - UI task in a fullstack ticket → the FE dev server points to the local BE dev server on
+     the BE feature branch (`CLAUDE.md` §1, §5 "UI verification"). FE-only ticket → the FE's
+     configured environment. Credentials per `CLAUDE.md` §5 "Test credentials and secrets".
+   - BE task → follow `CLAUDE.md` §5 "Backend work": update the contract (repo OpenAPI file,
+     or the spec's `contracts/` file if the repo has none) in the same task as the code; write
+     migrations but never apply them to a persistent DB (integration tests may use a throwaway
+     test DB); integration
      tests run against a real DB, not mocks; do not start a dev server that auto-applies a
      migration the user has not applied yet.
    - Migration apply task (`[manual]`) → hand the exact command to the user and wait for
@@ -53,8 +59,8 @@ Use `superpowers:subagent-driven-development`, taking tasks **in order from `tas
    `web-design-guidelines` on the changed UI files.
    BE tasks also require, attached to the review, the evidence for each check the task lists
    (`CLAUDE.md` §5 "BE verification" table): integration test output, recorded endpoint calls
-   on the local dev server for every AC case (request + status + relevant body), contract test
-   output against `contracts/`, and `/security-review` results.
+   on the local dev server for every AC case (request + status + relevant body, tokens masked),
+   contract test output against the contract, and `/security-review` results.
 3. **On pass** — immediately tick the task `[x]` in `tasks.md`, then commit:
    `<type>(<scope>): <KEY> <task id> <summary>` (use the `git-commit` skill). Never batch ticks.
 4. **On failure** — fix and re-review. After **2** failed attempts on the same task, stop: write a

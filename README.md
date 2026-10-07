@@ -3,7 +3,7 @@
 A Claude Code workspace that takes Jira tickets to merged, documented code using
 **Spec Kit** (spec → plan → tasks) and **Superpowers** (subagents, TDD, review).
 It covers fullstack work: frontend (FE) and backend (BE) repos side by side, with the API
-contract shared through the BE spec.
+contract owned by the BE side.
 
 - `CLAUDE.md` is the rulebook: lanes, workflow, guardrails, and per-repo commands.
 - `.claude/commands/` adds three shortcuts: `/ticket`, `/build`, and `/fix`.
@@ -37,7 +37,7 @@ contract shared through the BE spec.
         ├── CLAUDE.md         # optional: repo-specific instructions
         ├── .specify/         # Spec Kit config + constitution
         ├── specs/<NNN-feature>/{spec,plan,tasks}.md
-        ├── specs/<NNN-feature>/contracts/  # BE: OpenAPI contract (source of truth for the API)
+        ├── specs/<NNN-feature>/contracts/  # BE: OpenAPI contract, or notes linking to the repo's own OpenAPI file
         └── ...code
 ```
 
@@ -241,8 +241,10 @@ If the fix turns out bigger than Lane 1, it stops and suggests `/ticket` instead
   is a stub that loads its guide from the CLI, so the CLI must be installed. On Next.js 16.3+
   with Turbopack, Claude verifies through `next-dev-loop`, which also reads `/_next/mcp`.
 - **Backend:**
-  - The API contract is the OpenAPI file in the BE spec's `contracts/`. It changes in the same
-    task as the code. Breaking changes are flagged to you first.
+  - The API contract is the BE repo's own OpenAPI file if it has one; otherwise the OpenAPI
+    file in the BE spec's `contracts/`. It changes in the same task as the code. Breaking
+    changes are flagged to you first.
+  - The checks for a throwaway test DB and Docker run before the baseline, not after.
   - Claude writes migrations but never applies them to a real database (dev, staging, prod).
     Applying is a `[manual]` task for you. Integration tests may use a throwaway test DB.
   - It checks that integration tests use a throwaway DB, and doesn't start a dev server that
@@ -253,6 +255,11 @@ If the fix turns out bigger than Lane 1, it stops and suggests `/ticket` instead
   - A fix that needs a migration or a contract change is Lane 2, not `/fix`, except a
     production hotfix.
   - These safety rules win over a repo's own `CLAUDE.md`; conflicts are flagged to you.
+- **Which API the FE uses:** a fullstack ticket points the FE dev server at the local BE on the
+  feature branch. An FE-only ticket uses the FE's own configured env (which may be staging);
+  there Claude uses test accounts only and asks before changing shared data.
+- **Credentials:** only test users/tokens from seed or fixture files (or ones you give).
+  Secrets are never written to specs, `tasks.md`, reviews, commits, or chat.
 - **Stuck after 2 attempts:** Claude stops, writes a blocker note, and asks you. It doesn't keep guessing.
 - **`[manual]` tasks:** tasks that can't be tested automatically have written steps. They stay unticked until verified.
 - **Commits:** Claude uses the `git-commit` skill. The format is Conventional Commits with the
@@ -270,10 +277,12 @@ The full rules are in [`CLAUDE.md`](CLAUDE.md).
 If a ticket touches more than one repo (for example, the API and the web app):
 
 1. `/ticket` creates **one spec per repo**, cross-linked with the same ticket key.
-2. The API contract lives only in the BE spec's `contracts/`. The FE spec links to it instead
-   of redefining endpoints.
+2. The API contract lives only on the BE side (repo OpenAPI file or the BE spec's
+   `contracts/`). The FE spec links to it instead of redefining endpoints.
 3. Run `/build` for each spec in dependency order: BE first, then FE. If the BE build wrote a
-   migration, apply it (the `[manual]` task) before building the FE against the dev server.
+   migration, apply it (the `[manual]` task) before building the FE.
+4. While building the FE, its dev server points to the local BE dev server on the BE feature
+   branch, not to staging.
 
 ---
 
