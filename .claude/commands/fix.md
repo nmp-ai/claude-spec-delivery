@@ -20,7 +20,8 @@ Follow `CLAUDE.md` sections 4–6. No Spec Kit, no plan files.
 - **Lane 0** (no behavior change) or **Lane 1** (local bug, ≤ ~3 files, no new requirement) → continue.
 - Anything bigger (new requirement, many modules, design change, a database migration, or an
   API contract change) → stop and recommend
-  `/ticket <KEY>`. Tell the user why.
+  `/ticket <KEY>`. Tell the user why. Exception: a production hotfix that needs a migration or
+  contract change stays here under the limits in `CLAUDE.md` §5 "Hotfix".
 
 ## 3. Baseline (Lane 1)
 Run the relevant tests once and note pre-existing failures. They are not regressions.
@@ -34,9 +35,9 @@ Run the relevant tests once and note pre-existing failures. They are not regress
    If it truly cannot be automated, write `[manual]` reproduction/verification steps instead.
 3. Minimal fix within scope. Do not refactor unrelated code.
 4. Verify: the new test passes, and no new failures versus baseline (§6 commands).
-   BE repo: also run integration tests and call the fixed endpoint on the local dev server
-   (`CLAUDE.md` §5 "Backend work"); run `/security-review` if the fix touches auth, input
-   handling, queries, or secrets.
+   BE repo: also run the checks from the `CLAUDE.md` §5 "BE verification" table that match
+   what the fix touches (integration tests, calling the fixed endpoint on the local dev
+   server, contract test, `/security-review`), with its migration and dev-server limits.
 
 After **2** failed fix attempts, stop: report what was tried, the errors, and hypotheses, and ask the user.
 Never skip/weaken tests to get green.

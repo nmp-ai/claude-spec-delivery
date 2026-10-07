@@ -245,10 +245,14 @@ If the fix turns out bigger than Lane 1, it stops and suggests `/ticket` instead
     task as the code. Breaking changes are flagged to you first.
   - Claude writes migrations but never applies them to a real database (dev, staging, prod).
     Applying is a `[manual]` task for you. Integration tests may use a throwaway test DB.
-  - Every BE task is verified with integration tests on a real DB, endpoint calls on the local
-    dev server for each AC case, contract tests, and `/security-review` when it touches auth,
-    input, queries, or secrets.
-  - A fix that needs a migration or a contract change is Lane 2, not `/fix`.
+  - It checks that integration tests use a throwaway DB, and doesn't start a dev server that
+    would auto-apply a migration you haven't applied. If Docker isn't running, it asks you.
+  - BE tasks are verified by what they touch (`CLAUDE.md` §5 table): integration tests on a
+    real DB, endpoint calls on the local dev server for each AC case, contract tests, and
+    `/security-review` for auth, input, queries, or secrets.
+  - A fix that needs a migration or a contract change is Lane 2, not `/fix`, except a
+    production hotfix.
+  - These safety rules win over a repo's own `CLAUDE.md`; conflicts are flagged to you.
 - **Stuck after 2 attempts:** Claude stops, writes a blocker note, and asks you. It doesn't keep guessing.
 - **`[manual]` tasks:** tasks that can't be tested automatically have written steps. They stay unticked until verified.
 - **Commits:** Claude uses the `git-commit` skill. The format is Conventional Commits with the

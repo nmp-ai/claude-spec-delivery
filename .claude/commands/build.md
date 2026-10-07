@@ -38,8 +38,9 @@ Use `superpowers:subagent-driven-development`, taking tasks **in order from `tas
      (`next-dev-loop` on Next.js 16.3+ with Turbopack; `CLAUDE.md` §5 "UI verification").
    - BE task → follow `CLAUDE.md` §5 "Backend work": update the `contracts/` OpenAPI file in
      the same task as the code; write migrations but never apply them to a persistent DB
-     (integration tests may use a throwaway test DB); integration tests run against a real DB,
-     not mocks.
+     (integration tests may use a throwaway test DB; check the test DB config first); integration
+     tests run against a real DB, not mocks; do not start a dev server that auto-applies a
+     migration the user has not applied yet.
    - Migration apply task (`[manual]`) → hand the exact command to the user and wait for
      confirmation before tasks that need the new schema on the dev server.
    - `[manual]` task → perform the steps if possible and record the result; otherwise hand the
@@ -50,10 +51,10 @@ Use `superpowers:subagent-driven-development`, taking tasks **in order from `tas
    affected state, compared against the Figma frame when the task links one, otherwise against
    the AC. Attach the result to the review. The code-quality review of UI tasks also runs
    `web-design-guidelines` on the changed UI files.
-   BE tasks also require, attached to the review: integration test output, recorded endpoint
-   calls on the local dev server for every AC case (request + status + relevant body), contract
-   test output against `contracts/`, and `/security-review` results when the task touches auth,
-   input handling, queries, file/network access, or secrets.
+   BE tasks also require, attached to the review, the evidence for each check the task lists
+   (`CLAUDE.md` §5 "BE verification" table): integration test output, recorded endpoint calls
+   on the local dev server for every AC case (request + status + relevant body), contract test
+   output against `contracts/`, and `/security-review` results.
 3. **On pass** — immediately tick the task `[x]` in `tasks.md`, then commit:
    `<type>(<scope>): <KEY> <task id> <summary>` (use the `git-commit` skill). Never batch ticks.
 4. **On failure** — fix and re-review. After **2** failed attempts on the same task, stop: write a

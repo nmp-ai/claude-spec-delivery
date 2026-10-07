@@ -37,7 +37,8 @@ the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
 2. Append `## Change: <KEY> — <title>` to the existing `spec.md` (format in `CLAUDE.md` §4) and
    update the affected requirements in place. Do **not** create a new spec folder.
 3. Run `/speckit-clarify` if anything is ambiguous.
-4. Update `plan.md` for the change. Then:
+4. Update `plan.md` for the change (BE: and the OpenAPI file in `contracts/`, same rules as
+   Lane 3 step 4). Then:
    - `tasks.md` exists → do **not** run `/speckit-tasks` (it regenerates the file and drops
      ticked tasks and the `## Build log`). Append the new tasks by hand under a
      `## Change: <KEY>` phase, continuing the existing task IDs, same checklist format,
@@ -50,7 +51,9 @@ the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
    outcome into step 2.
 2. `/speckit-specify` with the ticket content, AC, and Figma links.
 3. `/speckit-clarify`.
-4. `/speckit-plan`.
+4. `/speckit-plan`. BE repo: ask for the API contract as an OpenAPI file in `contracts/`.
+   FE repo of a fullstack ticket: `contracts/` must not define API endpoints; link to the BE
+   spec's OpenAPI file instead (`CLAUDE.md` §5 "Backend work").
 5. `/speckit-tasks`.
 
 ### Both lanes — task list rules
@@ -64,8 +67,9 @@ the target repo (`CLAUDE.md` §2 "Spec Kit layout across repos").
     task documents the current endpoints as-is, then a second applies the change.
   - Each migration is its own task, followed by a `[manual]` task with the exact apply
     command for the user. Tasks that need the new schema on the dev server come after it.
-  - Each endpoint task lists its verification: integration test, endpoint calls per AC case,
-    contract test, and `/security-review` when it touches auth, input, queries, or secrets.
+  - Each BE task lists the checks it needs, per the table in `CLAUDE.md` §5 "BE verification"
+    (e.g. endpoint task: integration test, endpoint calls per AC case, contract test; plus
+    `/security-review` when it touches auth, input, queries, or secrets).
   - Breaking contract changes are flagged to the user before the tasks are written.
 - Fullstack ticket: the FE spec links to the BE spec's `contracts/` file for every endpoint it
   uses and does not redefine payloads. Its API-dependent tasks note the BE spec they depend on.
