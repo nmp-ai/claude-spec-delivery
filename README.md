@@ -1,4 +1,4 @@
-# AI Delivery Template
+# Claude Spec Delivery
 
 A Claude Code workspace that takes Jira tickets to merged, documented code using
 **Spec Kit** (spec → plan → tasks) and **Superpowers** (subagents, TDD, review).
